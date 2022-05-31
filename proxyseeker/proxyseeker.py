@@ -5,16 +5,17 @@ import pandas as pd
 from bs4 import BeautifulSoup as bs
 from concurrent.futures import ThreadPoolExecutor
 from random import sample, choice
+from time import time
 
 class Seeker:
-    def __init__(self):
+    def __init__(self, replay_size=10):
         self.proxy_url = 'https://free-proxy-list.net/'
         self.proxy_list = self.get_proxies()
         self.response = None
         self.local_proxy = None
         self.querystring = {
             "pageNum":"1",
-            "pageSize":"10",
+            "pageSize":f"{replay_size}",
             "level":"0",
             "playerName":""
         }
@@ -78,3 +79,16 @@ class Seeker:
             print(f'Connection found @ {self.local_proxy}')
         else:
             print("No connections available...")
+
+    def connect(self, timeout=3600):
+        start = time()
+        while not self.response:
+            proxy_list = self.get_proxies()
+            self.seek(proxy_list)
+            if not self.response:
+                if int(time() - start) == timeout:
+                    print('connection timed out!!')
+                    return False
+                self.headers['User-Agent'] = self.getUserAgent(self.agent_filename)
+                print('connection not found, retrying....')
+        return True
